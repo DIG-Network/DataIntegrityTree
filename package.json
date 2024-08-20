@@ -1,0 +1,36 @@
+{
+  "name": "dig-data-integrity-tree",
+  "version": "0.0.1",
+  "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Datalayer-Storage/DataIntegrityTree.git"
+  },
+  "keywords": [
+    "chia-blockchain",
+    "dig",
+    "decentralized",
+    "internet",
+    "gateway"
+  ],
+  "author": "Michael Taylor",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Datalayer-Storage/DataIntegrityTree/issues"
+  },
+  "homepage": "https://github.com/Datalayer-Storage/DataIntegrityTree#readme",
+  "dependencies": {
+    "crypto-js": "^4.2.0",
+    "merkletreejs": "^0.4.0",
+    "zlib": "^1.0.5"
+  },
+  "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}
