@@ -1,12 +1,12 @@
 {
   "name": "dig-data-integrity-tree",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
   "type": "module",
   "main": "./dist/index.js",
-  "types": "./index.d.ts",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc",
+    "build": "rm -rf dist && tsc && mv index.d.ts dist/",
     "test": "echo \"Error: no test specified\" && exit 1",
     "release": "standard-version",
     "postrelease": "npm run build && git push --follow-tags && npm publish"
@@ -16,7 +16,6 @@
     "url": "git+https://github.com/Datalayer-Storage/DataIntegrityTree.git"
   },
   "files": [
-    "index.d.ts",
     "dist",
     "README.md",
     "LICENSE"
