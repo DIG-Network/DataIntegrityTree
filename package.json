@@ -1,9 +1,9 @@
 {
   "name": "dig-data-integrity-tree",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": ".index.ts",
   "types": "./index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc",
@@ -26,12 +26,6 @@
     "url": "https://github.com/Datalayer-Storage/DataIntegrityTree/issues"
   },
   "homepage": "https://github.com/Datalayer-Storage/DataIntegrityTree#readme",
-  "files": [
-    "index.d.ts",
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
   "dependencies": {
     "crypto-js": "^4.2.0",
     "merkletreejs": "^0.4.0",
