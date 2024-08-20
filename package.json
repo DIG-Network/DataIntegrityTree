@@ -1,9 +1,8 @@
 {
   "name": "dig-data-integrity-tree",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
-  "type": "module",
-  "main": ".index.ts",
+  "main": "./index.ts",
   "types": "./index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc",
