@@ -1,10 +1,10 @@
 {
   "name": "dig-data-integrity-tree",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
   "type": "module",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
