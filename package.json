@@ -1,10 +1,15 @@
 {
   "name": "dig-data-integrity-tree",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
-  "main": "index.js",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rm -rf dist && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "release": "standard-version",
+    "postrelease": "npm run build && git push --follow-tags && npm publish"
   },
   "repository": {
     "type": "git",
@@ -13,9 +18,7 @@
   "keywords": [
     "chia-blockchain",
     "dig",
-    "decentralized",
-    "internet",
-    "gateway"
+    "decentralized internet gateway"
   ],
   "author": "Michael Taylor",
   "license": "MIT",
@@ -23,6 +26,11 @@
     "url": "https://github.com/Datalayer-Storage/DataIntegrityTree/issues"
   },
   "homepage": "https://github.com/Datalayer-Storage/DataIntegrityTree#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "crypto-js": "^4.2.0",
     "merkletreejs": "^0.4.0",
@@ -30,6 +38,7 @@
   },
   "devDependencies": {
     "@types/crypto-js": "^4.2.2",
+    "standard-version": "^9.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
   }

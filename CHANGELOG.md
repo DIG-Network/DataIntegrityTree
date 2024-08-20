@@ -1,0 +1,11 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### 0.0.6 (2024-08-20)
+
+
+### Features
+
+* add DataIntegrityTree class ([caeb0a2](https://github.com/Datalayer-Storage/DataIntegrityTree/commit/caeb0a2596ce99d1ff44d4654c7473a2f6368c2a))
+* add license ([76f8048](https://github.com/Datalayer-Storage/DataIntegrityTree/commit/76f8048ff1cac183980f2549e1380fcacb180d0b))
