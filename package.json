@@ -1,6 +1,6 @@
 {
   "name": "dig-data-integrity-tree",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
   "type": "module",
   "main": "./dist/index.js",
