@@ -1,19 +1,18 @@
 {
-  "name": "dig-data-integrity-tree",
-  "version": "0.0.18",
+  "name": "@dignetwork/data-integrity-tree",
+  "version": "0.0.20",
   "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc && mv index.d.ts dist/",
+    "build": "rm -rf dist && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "release": "standard-version",
-    "postrelease": "npm run build && git push --follow-tags && npm publish"
+    "prepare-release": "bash ./scripts/release.sh"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Datalayer-Storage/DataIntegrityTree.git"
+    "url": "git+https://github.com/DIG-Network/DataIntegrityTree.git"
   },
   "files": [
     "dist",
@@ -28,9 +27,9 @@
   "author": "Michael Taylor",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Datalayer-Storage/DataIntegrityTree/issues"
+    "url": "https://github.com/DIG-Network/DataIntegrityTree/issues"
   },
-  "homepage": "https://github.com/Datalayer-Storage/DataIntegrityTree#readme",
+  "homepage": "https://github.com/DIG-Network/DataIntegrityTree#readme",
   "dependencies": {
     "crypto-js": "^4.2.0",
     "merkletreejs": "^0.4.0",
