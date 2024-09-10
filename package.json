@@ -1,6 +1,6 @@
 {
   "name": "@dignetwork/data-integrity-tree",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "Modularized Data Integrity Tree used in the DIG Network Clients.",
   "type": "module",
   "main": "./dist/index.js",

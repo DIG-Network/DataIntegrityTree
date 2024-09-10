@@ -6,6 +6,7 @@ import { SHA256 } from "crypto-js";
 import { MerkleTree } from "merkletreejs";
 import { Readable } from "stream";
 import { promisify } from "util";
+import DataLayerError from "./DataLayerError";
 
 const unlink = promisify(fs.unlink);
 
@@ -45,9 +46,10 @@ const isHexString = (str: string): boolean => {
 export interface DataIntegrityTreeOptions {
   storeDir?: string;
   storageMode?: "local" | "unified";
+  rootHash?: string;
   // This is a hack to prevent an empty root hash from
   // being commited in the constructor when the tree is empty
-  disableInitialize?: boolean
+  disableInitialize?: boolean;
 }
 
 /**
@@ -67,17 +69,17 @@ class DataIntegrityTree {
     }
     this.storeId = storeId;
     this.storeBaseDir = options.storeDir || "./";
-    
+
     if (!fs.existsSync(this.storeBaseDir)) {
       fs.mkdirSync(this.storeBaseDir, { recursive: true });
     }
-    
+
     if (options.storageMode === "unified") {
       this.dataDir = path.join(this.storeBaseDir, "data");
     } else {
       this.dataDir = path.join(this.storeBaseDir, this.storeId, "data");
     }
-    
+
     this.storeDir = path.join(this.storeBaseDir, this.storeId);
 
     if (!fs.existsSync(this.storeDir)) {
@@ -89,12 +91,29 @@ class DataIntegrityTree {
     }
 
     this.files = new Map();
-    this.tree = this._loadLatestTree();
+
+    if (options.rootHash) {
+      const manifest = this._loadManifest();
+      if (manifest.includes(options.rootHash)) {
+        this.tree = this.deserializeTree(options.rootHash);
+      } else {
+        throw new DataLayerError(
+          404,
+          `Root hash ${options.rootHash} not found`
+        );
+      }
+    } else {
+      this.tree = this._loadLatestTree();
+    }
 
     // Commit the empty Merkle tree immediately upon creation
     if (!options.disableInitialize && this.tree.getLeafCount() === 0) {
       this.commit();
     }
+  }
+
+  public static from(storeId: string, options: DataIntegrityTreeOptions): DataIntegrityTree {
+    return new DataIntegrityTree(storeId, { ...options, disableInitialize: true });
   }
 
   /**
@@ -352,15 +371,32 @@ class DataIntegrityTree {
     return tree;
   }
 
+  private appendRootHashToManifest(rootHash: string): void {
+    const manifestPath = path.join(this.storeDir, "manifest.dat");
+    // Read the current manifest file
+    const manifestContent = fs.existsSync(manifestPath)
+      ? fs.readFileSync(manifestPath, "utf-8").trim().split("\n")
+      : [];
+  
+    // Check if the last entry is the same as the rootHash to avoid duplicates
+    const latestRootHash = manifestContent.length > 0 ? manifestContent[manifestContent.length - 1] : null;
+  
+    if (latestRootHash !== rootHash) {
+      // Append the new rootHash if it is not the same as the last one
+      fs.appendFileSync(manifestPath, `${rootHash}\n`);
+    } else {
+      console.log(`Root hash ${rootHash} is already at the end of the file. Skipping append.`);
+    }
+  }
+
   /**
    * Commit the current state of the Merkle tree.
    */
-  commit(): string {
-    const emptyRootHash = "0000000000000000000000000000000000000000000000000000000000000000";
+  commit(): string | undefined {
+    const emptyRootHash =
+      "0000000000000000000000000000000000000000000000000000000000000000";
     const rootHash =
-      this.tree.getLeafCount() === 0
-        ? emptyRootHash
-        : this.getRoot();
+      this.tree.getLeafCount() === 0 ? emptyRootHash : this.getRoot();
 
     const manifest = this._loadManifest();
     const latestRootHash =
@@ -368,17 +404,20 @@ class DataIntegrityTree {
 
     if (rootHash === latestRootHash && rootHash !== emptyRootHash) {
       console.log("No changes to commit. Aborting commit.");
-      throw new Error("No changes to commit.");
+      return undefined;
     }
 
-    const manifestPath = path.join(this.storeDir, "manifest.dat");
-    fs.appendFileSync(manifestPath, `${rootHash}\n`);
+    this.appendRootHashToManifest(rootHash);
 
     const treeFilePath = path.join(this.storeDir, `${rootHash}.dat`);
     if (!fs.existsSync(path.dirname(treeFilePath))) {
       fs.mkdirSync(path.dirname(treeFilePath), { recursive: true });
     }
-    const serializedTree = this.serialize() as { root: string; leaves: string[]; files: object };
+    const serializedTree = this.serialize() as {
+      root: string;
+      leaves: string[];
+      files: object;
+    };
     if (rootHash === emptyRootHash) {
       serializedTree.root = emptyRootHash;
     }
@@ -394,6 +433,43 @@ class DataIntegrityTree {
    */
   clearPendingRoot(): void {
     this.tree = this._loadLatestTree();
+  }
+
+  /**
+   * Check if a file exists for a given key.
+   * @param hexKey - The hexadecimal key of the file.
+   * @param rootHash - The root hash of the tree. Defaults to the latest root hash.
+   * @returns A boolean indicating if the file exists.
+   */
+  hasKey(hexKey: string, rootHash: string | null = null): boolean {
+    if (!isHexString(hexKey)) {
+      throw new Error("key must be a valid hex string");
+    }
+    if (rootHash && !isHexString(rootHash)) {
+      throw new Error("rootHash must be a valid hex string");
+    }
+
+    let sha256: string | undefined;
+
+    if (rootHash) {
+      const tree = this.deserializeTree(rootHash);
+      // @ts-ignore
+      sha256 = tree.files.get(hexKey)?.sha256;
+    } else {
+      sha256 = this.files.get(hexKey)?.sha256;
+    }
+
+    if (!sha256) {
+      return false;
+    }
+
+    const filePath = path.join(
+      this.dataDir,
+      sha256.match(/.{1,2}/g)!.join("/")
+    );
+
+    // Check if the file exists at the calculated path
+    return fs.existsSync(filePath);
   }
 
   /**
@@ -424,7 +500,10 @@ class DataIntegrityTree {
       throw new Error(`File with key ${hexKey} not found.`);
     }
 
-    const filePath = path.join(this.dataDir, sha256.match(/.{1,2}/g)!.join("/"));
+    const filePath = path.join(
+      this.dataDir,
+      sha256.match(/.{1,2}/g)!.join("/")
+    );
 
     if (!fs.existsSync(filePath)) {
       throw new Error(`File at path ${filePath} does not exist`);
@@ -444,6 +523,16 @@ class DataIntegrityTree {
   deleteAllLeaves(): void {
     this.files.clear();
     this._rebuildTree();
+  }
+
+  getSHA256(hexKey: string, rootHash?: string): string | undefined {
+    if (!rootHash) {
+      return this.files.get(hexKey)?.sha256;
+    }
+
+    const tree = this.deserializeTree(rootHash);
+    // @ts-ignore
+    return tree.files.get(hexKey)?.sha256;
   }
 
   /**
@@ -631,6 +720,70 @@ class DataIntegrityTree {
         reject(err);
       });
     });
+  }
+
+  /**
+   * Static method to validate key integrity using a foreign Merkle tree.
+   * Verifies if a given SHA-256 hash for a key exists within the foreign tree and checks if the root hash matches.
+   *
+   * @param key - The hexadecimal key of the file.
+   * @param sha256 - The SHA-256 hash of the file.
+   * @param serializedTree - The foreign serialized Merkle tree.
+   * @param expectedRootHash - The expected root hash of the Merkle tree.
+   * @returns A boolean indicating if the SHA-256 is present in the foreign tree and the root hash matches.
+   */
+  static validateKeyIntegrityWithForeignTree(
+    key: string,
+    sha256: string,
+    serializedTree: object,
+    expectedRootHash: string
+  ): boolean {
+    if (!isHexString(key)) {
+      throw new Error("key must be a valid hex string");
+    }
+    if (!isHexString(sha256)) {
+      throw new Error("sha256 must be a valid hex string");
+    }
+    if (!isHexString(expectedRootHash)) {
+      throw new Error("expectedRootHash must be a valid hex string");
+    }
+
+    // Deserialize the foreign tree
+    const leaves = (serializedTree as any).leaves.map((leaf: string) =>
+      Buffer.from(leaf, "hex")
+    );
+    const tree = new MerkleTree(leaves, SHA256, { sortPairs: true });
+
+    // Verify that the deserialized tree's root matches the expected root hash
+    const treeRootHash = tree.getRoot().toString("hex");
+    if (treeRootHash !== expectedRootHash) {
+      console.warn(
+        `Expected root hash ${expectedRootHash}, but got ${treeRootHash}`
+      );
+      return false;
+    }
+
+    // Rebuild the files map from the serialized tree
+    // @ts-ignore
+    tree.files = new Map(
+      Object.entries((serializedTree as any).files).map(
+        ([key, value]: [string, any]) => [
+          key,
+          { hash: value.hash, sha256: value.sha256 },
+        ]
+      )
+    );
+
+    // Check if the SHA-256 exists in the foreign tree's files
+    const combinedHash = crypto
+      .createHash("sha256")
+      .update(`${toHex(key)}/${sha256}`)
+      .digest("hex");
+
+    const leaf = Buffer.from(combinedHash, "hex");
+    const isInTree = tree.getLeafIndex(leaf) !== -1;
+
+    return isInTree;
   }
 }
 
