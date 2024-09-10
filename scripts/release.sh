@@ -14,7 +14,7 @@ if [ "$CURRENT_BRANCH" != "develop" ]; then
 fi
 
 # Run standard-version for version bumping
-npx standard-version --prerelease alpha
+npx standard-version
 
 # Extract the new version from package.json after bumping
 NEW_VERSION=$(jq -r '.version' package.json)
